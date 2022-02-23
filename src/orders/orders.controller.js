@@ -24,6 +24,20 @@ function orderExists(req, res, nxt) {
   });
 }
 
+function idIsValid(req, res, nxt) {
+  const {
+    data: { id },
+  } = req.body;
+  const { orderId } = req.params;
+
+  id && id !== orderId
+    ? nxt({
+        status: 400,
+        message: `Invalid id: ${id}`,
+      })
+    : nxt();
+}
+
 function dishesIsArray(req, res, nxt) {
   const {
     data: { dishes },
@@ -78,8 +92,28 @@ function read(req, res) {
 }
 
 // * update / PUT
+function update(req, res) {
+  const order = res.locals.order;
+  const {
+    data: { id, deliverTo, mobileNumber, status, dishes },
+  } = req.body;
+  
+  if (id) order.id = id;
+  order.deliverTo = deliverTo;
+  order.mobileNumber = mobileNumber;
+  order.status = status;
+  order.dishes = [...dishes];
+
+  res.json({ data: order });
+}
 
 // * destroy / DELETE
+function destroy(req, res) {
+  const { orderId } = req.params;
+  const index = orders.findIndex(order => order.id == orderId);
+  const deletedOrder = orders.splice(index, 1);
+  res.sendStatus(204);
+}
 
 module.exports = {
   list,
@@ -90,5 +124,16 @@ module.exports = {
     dishesIsArray,
     create,
   ],
+  delete: [orderExists, destroy],
   read: [orderExists, read],
+  update: [
+    orderExists,
+    idIsValid,
+    bodyDataHas("status"),
+    bodyDataHas("deliverTo"),
+    bodyDataHas("mobileNumber"),
+    bodyDataHas("dishes"),
+    dishesIsArray,
+    update,
+  ]
 };
