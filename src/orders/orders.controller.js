@@ -33,19 +33,29 @@ function idIsValid(req, res, nxt) {
   id && id !== orderId
     ? nxt({
         status: 400,
-        message: `Invalid id: ${id}`,
+        message: `Order id does not match route id. Order: ${id}, Route: ${orderId}.`,
       })
     : nxt();
 }
 
-function dishesIsArray(req, res, nxt) {
+function dishesIsValid(req, res, nxt) {
   const {
     data: { dishes },
   } = req.body;
   Array.isArray(dishes)
     ? dishes.length > 0
-      ? dishes.every(({ quantity }) => quantity && quantity > 0)
-        ? dishes.every(({ quantity }) => Number.isInteger(quantity) )
+      ? dishes.every(({ quantity }, index) => {
+          if (quantity && Number.isInteger(quantity) && quantity > 0) {
+            return true;
+          }
+          if (!quantity || !Number.isInteger(quantity) || !(quantity > 0)) {
+            nxt({
+              status: 400,
+              message: `Dish ${index} must have a quantity that is an integer greater than 0`,
+            });
+          }
+        })
+        ? dishes.every(({ quantity }) => Number.isInteger(quantity))
           ? nxt()
           : nxt({
               status: 400,
@@ -57,12 +67,46 @@ function dishesIsArray(req, res, nxt) {
           })
       : nxt({
           status: 400,
-          message: `dish required`,
+          message: `Order must include at least one dish`,
         })
     : nxt({
         status: 400,
-        message: `dish array`,
+        message: `Order must include at least one dish`,
       });
+}
+function statusIsValid(req, res, nxt) {
+  const {
+    data: { status },
+  } = req.body;
+  const validStatus = ["pending", "preparing", "out-for-delivery", "delivered"];
+  validStatus.includes(status)
+    ? nxt()
+    : nxt({
+        status: 400,
+        message: `Order must have a status of pending, preparing, out-for-delivery, delivered`,
+      });
+}
+
+function statusIsNotDelivered(req, res, nxt) {
+  const {
+    data: { status },
+  } = req.body;
+  if (status === "delivered") {
+    return nxt({
+      status: 400,
+      message: `A delivered order cannot be changed`,
+    });
+  }
+  nxt();
+}
+function statusIsPending(req, res, nxt) {
+  const order = res.locals.order;
+  order.status !== "pending"
+    ? nxt({
+        status: 400,
+        message: `An order cannot be deleted unless it is pending`,
+      })
+    : nxt();
 }
 
 // * list / GET
@@ -97,7 +141,7 @@ function update(req, res) {
   const {
     data: { id, deliverTo, mobileNumber, status, dishes },
   } = req.body;
-  
+
   if (id) order.id = id;
   order.deliverTo = deliverTo;
   order.mobileNumber = mobileNumber;
@@ -110,7 +154,7 @@ function update(req, res) {
 // * destroy / DELETE
 function destroy(req, res) {
   const { orderId } = req.params;
-  const index = orders.findIndex(order => order.id == orderId);
+  const index = orders.findIndex((order) => order.id == orderId);
   const deletedOrder = orders.splice(index, 1);
   res.sendStatus(204);
 }
@@ -121,19 +165,21 @@ module.exports = {
     bodyDataHas("deliverTo"),
     bodyDataHas("mobileNumber"),
     bodyDataHas("dishes"),
-    dishesIsArray,
+    dishesIsValid,
     create,
   ],
-  delete: [orderExists, destroy],
+  delete: [orderExists, statusIsPending, destroy],
   read: [orderExists, read],
   update: [
     orderExists,
     idIsValid,
     bodyDataHas("status"),
+    statusIsValid,
+    statusIsNotDelivered,
     bodyDataHas("deliverTo"),
     bodyDataHas("mobileNumber"),
     bodyDataHas("dishes"),
-    dishesIsArray,
+    dishesIsValid,
     update,
-  ]
+  ],
 };

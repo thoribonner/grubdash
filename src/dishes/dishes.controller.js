@@ -17,7 +17,7 @@ function dishExists(req, res, nxt) {
   }
   nxt({
     status: 404,
-    message: `Dish ID not found: ${dishId}`,
+    message: `Dish does not exist: ${dishId}.`,
   });
 }
 
@@ -30,7 +30,7 @@ function idIsValid(req, res, nxt) {
   id && id !== dishId
     ? nxt({
         status: 400,
-        message: `Invalid id: ${id}`,
+        message: `ish id does not match route id. Dish: ${id}, Route: ${dishId}`,
       })
     : nxt();
 }
