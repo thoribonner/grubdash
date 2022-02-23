@@ -140,10 +140,9 @@ function read(req, res) {
 function update(req, res) {
   const order = res.locals.order;
   const {
-    data: { id, deliverTo, mobileNumber, status, dishes },
+    data: { deliverTo, mobileNumber, status, dishes },
   } = req.body;
 
-  if (id) order.id = id;
   order.deliverTo = deliverTo;
   order.mobileNumber = mobileNumber;
   order.status = status;
