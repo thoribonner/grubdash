@@ -110,6 +110,8 @@ function statusIsPending(req, res, nxt) {
     : nxt();
 }
 
+// * end validation
+
 // * list / GET
 function list(req, res) {
   res.json({ data: orders });
@@ -168,8 +170,15 @@ module.exports = {
     dishesIsValid,
     create,
   ],
-  delete: [orderExists, statusIsPending, destroy],
-  read: [orderExists, read],
+  delete: [
+    orderExists,
+    statusIsPending,
+    destroy
+  ],
+  read: [
+    orderExists,
+    read
+  ],
   update: [
     orderExists,
     idIsValid,

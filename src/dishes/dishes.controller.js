@@ -50,6 +50,8 @@ function priceIsValid(req, res, nxt) {
   });
 }
 
+// * end validation
+
 // * list / GET
 function list(req, res) {
   res.json({ data: dishes });
@@ -58,7 +60,7 @@ function list(req, res) {
 // * create / POST
 function create(req, res) {
   const {
-    data: { name, description, price, image_url },
+    data: { name, description, price, image_url } = {}
   } = req.body;
   const newDish = {
     id: nextId(),
@@ -101,7 +103,10 @@ module.exports = {
     priceIsValid,
     create,
   ],
-  read: [dishExists, read],
+  read: [
+    dishExists,
+    read
+  ],
   update: [
     dishExists,
     idIsValid,
