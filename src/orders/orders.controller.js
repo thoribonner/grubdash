@@ -7,7 +7,6 @@ const orders = require(path.resolve("src/data/orders-data"));
 // Use this function to assigh ID's when necessary
 const nextId = require("../utils/nextId");
 
-// TODO: Implement the /orders handlers needed to make the tests pass
 
 // * validation
 function orderExists(req, res, nxt) {
@@ -74,6 +73,7 @@ function dishesIsValid(req, res, nxt) {
         message: `Order must include at least one dish`,
       });
 }
+
 function statusIsValid(req, res, nxt) {
   const {
     data: { status },
@@ -99,6 +99,7 @@ function statusIsNotDelivered(req, res, nxt) {
   }
   nxt();
 }
+
 function statusIsPending(req, res, nxt) {
   const order = res.locals.order;
   order.status !== "pending"

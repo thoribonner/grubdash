@@ -1,3 +1,5 @@
+// * confirm input has all required properties
+
 function bodyDataHas(propertyName) {
   return function (req, res, nxt) {
     const { data = {} } = req.body;
