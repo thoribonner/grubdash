@@ -30,7 +30,7 @@ function idIsValid(req, res, nxt) {
   id && id !== dishId
     ? nxt({
         status: 400,
-        message: `ish id does not match route id. Dish: ${id}, Route: ${dishId}`,
+        message: `Dish id does not match route id. Dish: ${id}, Route: ${dishId}`,
       })
     : nxt();
 }
@@ -46,7 +46,7 @@ function priceIsValid(req, res, nxt) {
   }
   nxt({
     status: 400,
-    message: `price`,
+    message: `Dish must have a price that is an integer greater than 0`,
   });
 }
 
