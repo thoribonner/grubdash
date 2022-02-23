@@ -1,5 +1,4 @@
 const path = require("path");
-const { bodyDataHas } = require("../middleware/validation");
 const dishes = require(path.resolve("src/data/dishes-data"));
 
 // Use this function to assign ID's when necessary
@@ -51,6 +50,19 @@ function priceIsValid(req, res, nxt) {
     message: `price`,
   });
 }
+
+function bodyDataHas(propertyName) {
+  return function (req, res, nxt) {
+    const { data = {} } = req.body;
+    
+    data[propertyName]
+      ? nxt()
+      : nxt({
+          status: 400,
+          message: `Must include ${propertyName} property`,
+        });
+  };
+};
 
 // * list / GET
 function list(req, res, nxt) {
