@@ -1,10 +1,9 @@
 const path = require("path");
+const bodyDataHas = require("../utils/bodyDataHas");
 const dishes = require(path.resolve("src/data/dishes-data"));
 
 // Use this function to assign ID's when necessary
 const nextId = require("../utils/nextId");
-
-// TODO: Implement the /dishes handlers needed to make the tests pass
 
 // * validation
 
@@ -51,26 +50,13 @@ function priceIsValid(req, res, nxt) {
   });
 }
 
-function bodyDataHas(propertyName) {
-  return function (req, res, nxt) {
-    const { data = {} } = req.body;
-    
-    data[propertyName]
-      ? nxt()
-      : nxt({
-          status: 400,
-          message: `Must include ${propertyName} property`,
-        });
-  };
-};
-
 // * list / GET
-function list(req, res, nxt) {
+function list(req, res) {
   res.json({ data: dishes });
 }
 
 // * create / POST
-function create(req, res, nxt) {
+function create(req, res) {
   const {
     data: { name, description, price, image_url },
   } = req.body;
