@@ -1,5 +1,5 @@
 const path = require("path");
-const bodyDataHas = require("../utils/bodyDataHas");
+const { bodyDataHas } = require("../middleware/validation");
 const dishes = require(path.resolve("src/data/dishes-data"));
 
 // Use this function to assign ID's when necessary
@@ -11,7 +11,7 @@ const nextId = require("../utils/nextId");
 
 function dishExists(req, res, nxt) {
   const { dishId } = req.params;
-  const foundDish = dishes.find((dish) => dish.id === Number(dishId));
+  const foundDish = dishes.find((dish) => dish.id === dishId);
 
   if (foundDish) {
     res.locals.dish = foundDish;
@@ -20,6 +20,35 @@ function dishExists(req, res, nxt) {
   nxt({
     status: 404,
     message: `Dish ID not found: ${dishId}`,
+  });
+}
+
+function idIsValid(req, res, nxt) {
+  const {
+    data: { id },
+  } = req.body;
+  const { dishId } = req.params;
+
+  id && id !== dishId
+    ? nxt({
+        status: 400,
+        message: `Invalid id: ${id}`,
+      })
+    : nxt();
+}
+
+function priceIsValid(req, res, nxt) {
+  const {
+    data: { price },
+  } = req.body;
+  if (typeof price === "number") {
+    if (price > 0) {
+      return nxt();
+    }
+  }
+  nxt({
+    status: 400,
+    message: `price`,
   });
 }
 
@@ -34,7 +63,7 @@ function create(req, res, nxt) {
     data: { name, description, price, image_url },
   } = req.body;
   const newDish = {
-    id: nextId,
+    id: nextId(),
     name,
     description,
     price,
@@ -53,12 +82,7 @@ function read(req, res) {
 function update(req, res) {
   const dish = res.locals.dish;
   const {
-    data: {
-      name,
-      description,
-      price,
-      image_url
-    }
+    data: { name, description, price, image_url },
   } = req.body;
 
   dish.name = name;
@@ -66,7 +90,7 @@ function update(req, res) {
   dish.price = price;
   dish.image_url = image_url;
 
-  res.json({ dahta: dish })
+  res.json({ data: dish });
 }
 
 module.exports = {
@@ -74,17 +98,20 @@ module.exports = {
   create: [
     bodyDataHas("name"),
     bodyDataHas("description"),
-    bodyDataHas("price"),
     bodyDataHas("image_url"),
+    bodyDataHas("price"),
+    priceIsValid,
     create,
   ],
   read: [dishExists, read],
   update: [
     dishExists,
+    idIsValid,
     bodyDataHas("name"),
     bodyDataHas("description"),
-    bodyDataHas("price"),
     bodyDataHas("image_url"),
+    bodyDataHas("price"),
+    priceIsValid,
     update,
   ],
 };
