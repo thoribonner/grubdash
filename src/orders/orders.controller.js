@@ -7,7 +7,6 @@ const orders = require(path.resolve("src/data/orders-data"));
 // Use this function to assigh ID's when necessary
 const nextId = require("../utils/nextId");
 
-
 // * validation
 function orderExists(req, res, nxt) {
   const { orderId } = req.params;
@@ -37,41 +36,36 @@ function idIsValid(req, res, nxt) {
     : nxt();
 }
 
+
+function _dishesQuantityIsValid(nxt, quantity, index) {
+  if (!quantity || !Number.isInteger(quantity) || !(quantity > 0)) {
+    // * if any of these is false status 400
+    nxt({
+      status: 400,
+      message: `Dish ${index} must have a quantity that is an integer greater than 0`,
+    });
+    return false
+  }
+  if (quantity && Number.isInteger(quantity) && quantity > 0) {
+    return true;
+  }
+}
+
 function dishesIsValid(req, res, nxt) {
   const {
     data: { dishes },
   } = req.body;
-  Array.isArray(dishes)
-    ? dishes.length > 0
-      ? dishes.every(({ quantity }, index) => {
-          if (quantity && Number.isInteger(quantity) && quantity > 0) {
-            return true;
-          }
-          if (!quantity || !Number.isInteger(quantity) || !(quantity > 0)) {
-            nxt({
-              status: 400,
-              message: `Dish ${index} must have a quantity that is an integer greater than 0`,
-            });
-          }
-        })
-        ? dishes.every(({ quantity }) => Number.isInteger(quantity))
-          ? nxt()
-          : nxt({
-              status: 400,
-              message: `quantity be integer 2 pass?????`,
-            })
-        : nxt({
-            status: 400,
-            message: `dish quantity cannot be 0. 1 or more required`,
-          })
-      : nxt({
-          status: 400,
-          message: `Order must include at least one dish`,
-        })
-    : nxt({
-        status: 400,
-        message: `Order must include at least one dish`,
-      });
+
+  if (
+    !Array.isArray(dishes) || // * is dishes an array??
+    dishes.length <= 0 || // * is dishes at least one item??
+    !dishes.every(({ quantity }, index) => _dishesQuantityIsValid(nxt, quantity, index))) {
+    return nxt({
+      status: 400,
+      message: `Order must include at least one dish`,
+    });
+  }
+  nxt();
 }
 
 function statusIsValid(req, res, nxt) {
@@ -170,15 +164,8 @@ module.exports = {
     dishesIsValid,
     create,
   ],
-  delete: [
-    orderExists,
-    statusIsPending,
-    destroy
-  ],
-  read: [
-    orderExists,
-    read
-  ],
+  delete: [orderExists, statusIsPending, destroy],
+  read: [orderExists, read],
   update: [
     orderExists,
     idIsValid,
